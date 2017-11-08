@@ -12,12 +12,12 @@ from certstream.webserver import WebServer
 logging.basicConfig(format='[%(levelname)s:%(name)s] %(asctime)s - %(message)s', level=logging.DEBUG)
 
 
-def run():
+def run(proxy_string = None):
     logging.info("Starting CertStream...")
 
     loop = asyncio.get_event_loop()
 
-    watcher = TransparencyWatcher(loop)
+    watcher = TransparencyWatcher(_loop = loop, proxy_string = proxy_string)
     webserver = WebServer(loop, watcher)
 
     asyncio.ensure_future(asyncio.gather(*watcher.get_tasks()))

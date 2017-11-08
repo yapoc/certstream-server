@@ -32,19 +32,21 @@ class TransparencyWatcher(object):
 
     MAX_BLOCK_SIZE = 64
 
-    def __init__(self, _loop):
+    def __init__(self, _loop, proxy_string = None):
         self.loop = _loop
         self.stopped = False
         self.queues = []
         self.logger = logging.getLogger('certstream.watcher')
+        self.proxies = {'http': proxy_string, 'https': proxy_string}
 
         self.stream = asyncio.Queue()
 
         self.logger.info("Initializing the CTL watcher")
 
+
     def _initialize_ts_logs(self):
         try:
-            self.transparency_logs = requests.get('https://www.gstatic.com/ct/log_list/log_list.json').json()
+            self.transparency_logs = requests.get('https://www.gstatic.com/ct/log_list/log_list.json', proxies = self.proxies).json()
         except Exception as e:
             self.logger.fatal("Invalid response from certificate directory! Exiting :(")
             sys.exit(1)
@@ -77,7 +79,7 @@ class TransparencyWatcher(object):
             while not self.stopped:
                 try:
                     async with aiohttp.ClientSession(loop=self.loop) as session:
-                        async with session.get("https://{}/ct/v1/get-sth".format(operator_information['url'])) as response:
+                        async with session.get("https://{}/ct/v1/get-sth".format(operator_information['url']), proxy = self.proxies['http']) as response:
                             info = await response.json()
                 except aiohttp.ClientError as e:
                     self.logger.info('[{}] Exception -> {}'.format(name, e))
@@ -138,7 +140,7 @@ class TransparencyWatcher(object):
 
                 url = "https://{}/ct/v1/get-entries?start={}&end={}".format(operator_information['url'], start, end)
 
-                async with session.get(url) as response:
+                async with session.get(url, proxy = self.proxies['http']) as response:
                     certificates = await response.json()
                     if 'error_message' in certificates:
                         print("error!")
