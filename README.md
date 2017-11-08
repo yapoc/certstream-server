@@ -22,5 +22,5 @@ python run_server.py
 ```
 source <NOM_ENVIRONNEMENT_VIRTUEL>/bin/activate
 cd certstream-server
-python run_server.py
+python run_server.py --proxy-string "http[s]://[login[:mot_de_passe]@]proxy_host[:port]"
 ```
