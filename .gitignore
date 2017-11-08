@@ -99,3 +99,4 @@ celerybeat-schedule
 .DS_Store
 
 *.retry
+.*.sw*
