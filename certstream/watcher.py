@@ -32,12 +32,13 @@ class TransparencyWatcher(object):
 
     MAX_BLOCK_SIZE = 64
 
-    def __init__(self, _loop, proxy_string = None):
+    def __init__(self, _loop, proxy_string = None, persistance_folder = None):
         self.loop = _loop
         self.stopped = False
         self.queues = []
         self.logger = logging.getLogger('certstream.watcher')
         self.proxies = {'http': proxy_string, 'https': proxy_string}
+        self.persistance_folder = persistance_folder
 
         self.stream = asyncio.Queue()
 
@@ -72,9 +73,35 @@ class TransparencyWatcher(object):
         for task in asyncio.Task.all_tasks():
             task.cancel()
 
+    def _get_last_size_for_operator (self, operator_information):
+        if not self.persistance_folder:
+            return -1
+        try:
+            res = 0
+            with open ("{}/{}".format (self.persistance_folder, operator_information['url'].replace ('/', '__')), 'r') as f:
+                res = int (f.read ().strip ())
+        except ValueError:
+            res = 0
+        except FileNotFoundError:
+            res = 0
+        return res
+
+    def _save_index (self, operator_information, index = 0):
+        if not self.persistance_folder:
+            return self
+        try:
+            with open ("{}/{}".format (self.persistance_folder, operator_information['url'].replace ('/', '__')), 'w') as f:
+                f.write ("{}".format (index))
+                return self
+        except FileNotFoundError:
+            self.logger.error ("Impossible de persister l'index dans le dossier {}.".format (self.persistance_folder))
+            self.logger.error ("Existe-t-il seulement?")
+            sys.exit ("Ending script.")
+            
+
     async def watch_for_updates_task(self, operator_information):
         try:
-            latest_size = 0
+            latest_size = self._get_last_size_for_operator (operator_information)
             name = operator_information['description']
             while not self.stopped:
                 try:
@@ -89,7 +116,7 @@ class TransparencyWatcher(object):
                 tree_size = info.get('tree_size')
 
                 # TODO: Add in persistence and id tracking per log
-                if latest_size == 0:
+                if latest_size == -1:
                     latest_size = tree_size
 
                 if latest_size < tree_size:
@@ -153,6 +180,8 @@ class TransparencyWatcher(object):
                 start += self.MAX_BLOCK_SIZE
 
                 end = start + self.MAX_BLOCK_SIZE + 1
+
+                self._save_index (operator_information = operator_information, index = end)
 
 class DummyTransparencyWatcher(object):
     stream = asyncio.Queue()
