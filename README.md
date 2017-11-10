@@ -24,3 +24,10 @@ source <NOM_ENVIRONNEMENT_VIRTUEL>/bin/activate
 cd certstream-server
 python run_server.py --proxy-string "http[s]://[login[:mot_de_passe]@]proxy_host[:port]"
 ```
+
+## Lancement intégrant un dossier de pérénisation des informations récupérées
+```
+source <NOM_ENVIRONNEMENT_VIRTUEL>/bin/activate
+cd certstream-server
+python run_server.py --persistance-folder <DOSSIER_DANS_LEQUEL_ON_SOUHAITE_STOCKER_LES_INDEX>
+```
